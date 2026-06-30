@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
+import NotificationBell from "../components/NotificationBell.jsx";
 
 const navItems = [
   { to: "/dashboard", label: "Inicio", icon: Home, end: true },
@@ -162,6 +163,7 @@ export default function UserPortal() {
               <span className="rounded-md border border-slate-200/50 bg-white/40 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-white/10 dark:bg-slate-800/40 dark:text-slate-300">
                 Sector: {user?.sector}
               </span>
+              <NotificationBell />
               <ThemeToggle theme={theme} onToggle={toggleTheme} />
             </div>
           </header>

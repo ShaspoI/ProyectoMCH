@@ -10,6 +10,8 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
+import NotificationBell from "../components/NotificationBell.jsx";
 
 const navItems = [
   { to: "/tecnico", label: "Mis tickets", icon: Ticket, end: true },
@@ -18,7 +20,7 @@ const navItems = [
 
 export default function TecnicoLayout() {
   const { user, logout } = useAuth();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -138,7 +140,7 @@ export default function TecnicoLayout() {
 
         {/* Main content wrapper */}
         <div className="flex flex-1 flex-col overflow-hidden relative rounded-2xl border border-slate-200/60 bg-white/60 shadow-xl dark:border-white/10 dark:bg-slate-900/40 dark:shadow-2xl dark:backdrop-blur-xl backdrop-blur-md">
-          {/* Mobile Header */}
+          {/* Mobile Header - solo visible en pantallas pequeñas */}
           <div className="flex min-h-[64px] items-center justify-between border-b border-slate-200/50 px-4 md:hidden dark:border-white/10">
             <div className="flex items-center gap-3">
               <button 
@@ -149,8 +151,25 @@ export default function TecnicoLayout() {
               </button>
               <span className="font-semibold text-slate-900 dark:text-slate-100">Mantenimiento</span>
             </div>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/20">
-              <ClipboardList size={18} />
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/20">
+                <ClipboardList size={18} />
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Header - solo visible en md+ */}
+          <div className="hidden md:flex min-h-[64px] items-center justify-between border-b border-slate-200/50 px-6 dark:border-white/10">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Bienvenido,{" "}
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {user?.nombre} {user?.apellido}
+              </span>
+            </p>
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+              <ThemeToggle theme={theme} onToggle={toggleTheme} />
             </div>
           </div>
 

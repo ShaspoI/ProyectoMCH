@@ -9,21 +9,37 @@ function loadUsers() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     const parsedUsers = stored ? JSON.parse(stored) : mockUsers;
-    
-    // Recuperación de emergencia: asegurar que exista al menos un admin activo
-    const hasActiveAdmin = parsedUsers.some((u) => u.role === "admin" && u.estado === "Activo");
-    if (!hasActiveAdmin && parsedUsers.length > 0) {
-      // Buscar al administrador por defecto (admin@industria.com) o usar el primer usuario del array
-      const preferredIndex = parsedUsers.findIndex((u) => u.email === "admin@industria.com");
+
+    // ── Migración genérica ────────────────────────────────────────────────
+    // Detecta usuarios definidos en mockUsers que no existen en localStorage
+    // (identificados por id). Los agrega sin tocar los datos ya persistidos.
+    // Esto resuelve el caso en que se añaden usuarios mock en commits posteriores
+    // a la primera inicialización del storage.
+    const existingIds = new Set(parsedUsers.map((u) => u.id));
+    const missingUsers = mockUsers.filter((u) => !existingIds.has(u.id));
+    const merged = missingUsers.length > 0
+      ? [...parsedUsers, ...missingUsers]
+      : parsedUsers;
+
+    // Persiste el resultado solo si hubo cambios (evita escritura innecesaria)
+    if (missingUsers.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    }
+
+    // ── Recuperación de emergencia: garantizar al menos un admin activo ───
+    const hasActiveAdmin = merged.some((u) => u.role === "admin" && u.estado === "Activo");
+    if (!hasActiveAdmin && merged.length > 0) {
+      const preferredIndex = merged.findIndex((u) => u.email === "admin@industria.com");
       const adminIndex = preferredIndex !== -1 ? preferredIndex : 0;
-      parsedUsers[adminIndex] = {
-        ...parsedUsers[adminIndex],
+      merged[adminIndex] = {
+        ...merged[adminIndex],
         rol: "Admin",
         role: "admin",
         estado: "Activo",
       };
     }
-    return parsedUsers;
+
+    return merged;
   } catch {
     return mockUsers;
   }

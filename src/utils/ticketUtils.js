@@ -71,3 +71,17 @@ export function buildHistoryEntry({ action, detail, actor, actorId }) {
 export function formatActionDate(isoString) {
   return formatDate(isoString);
 }
+
+/**
+ * Evalúa si un ticket ha excedido el umbral de SLA sin ser cerrado.
+ * Umbral fijo: 3 días (Fase 4B-Core). Configurable en fases futuras.
+ * @param {object} ticket - Objeto del ticket del schema v3
+ * @param {number} thresholdDays - Días de umbral (default: 3)
+ * @returns {boolean}
+ */
+export function isOverSLA(ticket, thresholdDays = 3) {
+  if (!ticket?.createdAt || ticket.status === "cerrado") return false;
+  const created = new Date(ticket.createdAt).getTime();
+  if (isNaN(created)) return false;
+  return (Date.now() - created) > thresholdDays * 24 * 60 * 60 * 1000;
+}

@@ -24,6 +24,7 @@ import TecnicoProfile from "./pages/TecnicoProfile.jsx";
 import { UserProvider } from "./context/UserContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 import { SettingsProvider } from "./context/SettingsContext.jsx";
+import { NotificationProvider, useNotifications } from "./context/NotificationContext.jsx";
 
 export default function App() {
   return (
@@ -36,65 +37,85 @@ export default function App() {
             Este orden es la base de la fuente única de verdad para todos los usuarios del sistema.
           */}
           <UserProvider>
-            <SettingsProvider>
-              <AuthProvider>
-                <TicketProvider>
-                  <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <ProtectedRoute role="usuario">
-                          <UserPortal />
-                        </ProtectedRoute>
-                      }
-                    >
-                      <Route index element={<DashboardHome />} />
-                      <Route path="create-ticket" element={<CreateTicketPage />} />
-                      <Route path="my-tickets" element={<MyTicketsPage />} />
-                      <Route path="profile" element={<ProfilePage />} />
-                    </Route>
-
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute role="admin">
-                          <AdminLayout />
-                        </ProtectedRoute>
-                      }
-                    >
-                      <Route index element={<AdminDashboard />} />
-                      <Route path="tickets" element={<AdminTickets />} />
-                      <Route path="users" element={<AdminUsers />} />
-                      <Route path="settings" element={<AdminSettings />} />
-                      <Route path="profile" element={<AdminProfile />} />
-                    </Route>
-
-                    <Route
-                      path="/tecnico"
-                      element={
-                        <ProtectedRoute role="tecnico">
-                          <TecnicoLayout />
-                        </ProtectedRoute>
-                      }
-                    >
-                      <Route index element={<TecnicoTickets />} />
-                      <Route path="profile" element={<TecnicoProfile />} />
-                    </Route>
-
-                    <Route path="/" element={<RootRedirect />} />
-                    <Route path="*" element={<Navigate to="/login" replace />} />
-                  </Routes>
-                </TicketProvider>
-              </AuthProvider>
-            </SettingsProvider>
+            <NotificationProvider>
+              <SettingsProvider>
+                <AuthProvider>
+                  <TicketProviderWithNotifications />
+                </AuthProvider>
+              </SettingsProvider>
+            </NotificationProvider>
           </UserProvider>
         </ThemeProvider>
       </ToastProvider>
     </BrowserRouter>
+  );
+}
+
+/**
+ * Puente entre NotificationContext y TicketProvider.
+ * Evita importar NotificationContext desde TicketContext (dependencia circular).
+ * useNotifications() solo puede llamarse dentro de NotificationProvider.
+ */
+function TicketProviderWithNotifications() {
+  const { addNotification } = useNotifications();
+  return (
+    <TicketProvider onEvent={addNotification}>
+      <AppRoutes />
+    </TicketProvider>
+  );
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute role="usuario">
+            <UserPortal />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<DashboardHome />} />
+        <Route path="create-ticket" element={<CreateTicketPage />} />
+        <Route path="my-tickets" element={<MyTicketsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+      </Route>
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute role="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="tickets" element={<AdminTickets />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="settings" element={<AdminSettings />} />
+        <Route path="profile" element={<AdminProfile />} />
+      </Route>
+
+      <Route
+        path="/tecnico"
+        element={
+          <ProtectedRoute role="tecnico">
+            <TecnicoLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<TecnicoTickets />} />
+        <Route path="profile" element={<TecnicoProfile />} />
+      </Route>
+
+      <Route path="/" element={<RootRedirect />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }
 

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { forwardRef } from "react";
 import StatusBadge from "./StatusBadge.jsx";
-import { formatDate, getShortDescription, getStatus } from "../utils/ticketUtils.js";
+import { formatDate, getShortDescription, getStatus, isOverSLA } from "../utils/ticketUtils.js";
 
 const TicketCard = forwardRef(function TicketCard(
   {
@@ -140,6 +140,14 @@ const TicketCard = forwardRef(function TicketCard(
                 >
                   {ticket.assignedTo.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
                 </div>
+              )}
+              {isOverSLA(ticket) && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20"
+                  title="Este ticket lleva más de 3 días sin cerrarse"
+                >
+                  ⏱ +3d
+                </span>
               )}
             </div>
             <span className="text-xs font-medium text-slate-400 dark:text-slate-500">

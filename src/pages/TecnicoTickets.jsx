@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useTickets } from "../context/TicketContext.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { TICKET_STATUSES } from "../config/ticketStatuses.js";
-import { formatDate, getShortDescription, getStatus } from "../utils/ticketUtils.js";
+import { formatDate, getShortDescription, getStatus, isOverSLA } from "../utils/ticketUtils.js";
 import TecnicoTicketPanel from "../components/TecnicoTicketPanel.jsx";
 
 export default function TecnicoTickets() {
@@ -94,6 +94,14 @@ export default function TecnicoTickets() {
                       {ticket.id}
                     </span>
                     <StatusBadge status={status} />
+                    {isOverSLA(ticket) && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20"
+                        title="Este ticket lleva más de 3 días sin cerrarse"
+                      >
+                        ⏱ +3d
+                      </span>
+                    )}
                   </div>
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                     {formatDate(ticket.createdAt)}

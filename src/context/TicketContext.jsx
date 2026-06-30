@@ -26,7 +26,7 @@ function generateTicketId(tickets) {
   return `MT-${maxNum + 1}`;
 }
 
-export function TicketProvider({ children }) {
+export function TicketProvider({ children, onEvent }) {
   const [tickets, setTickets] = useState(loadTickets);
 
   useEffect(() => {
@@ -82,6 +82,11 @@ export function TicketProvider({ children }) {
    * Si el nuevo estado es "resuelto", establece closedAt.
    */
   const changeStatus = useCallback((ticketId, newStatusId, actor, actorId) => {
+    // Leer el ticket ANTES del update para usarlo en la notificación.
+    // tickets está en el closure (igual que addTicket). onEvent NO debe
+    // llamarse dentro del updater de setTickets (viola React rules of hooks).
+    const ticket = tickets.find((t) => t.id === ticketId);
+
     setTickets((prev) =>
       prev.map((t) => {
         if (t.id !== ticketId) return t;
@@ -107,7 +112,21 @@ export function TicketProvider({ children }) {
         };
       }),
     );
-  }, []);
+
+    // onEvent se llama DESPUÉS de setTickets, fuera del updater.
+    if (onEvent && ticket) {
+      const newLabel = TICKET_STATUSES.find((s) => s.id === newStatusId)?.label ?? newStatusId;
+      if (newStatusId === "resuelto-pendiente") {
+        onEvent("ticket_conformidad_required", ticket.userId, { ticketId });
+      } else if (newStatusId === "cerrado") {
+        onEvent("ticket_closed", ticket.userId, { ticketId });
+      } else if (newStatusId === "en-proceso" && ticket.assignedTo?.id) {
+        onEvent("ticket_reopened", ticket.assignedTo.id, { ticketId });
+      } else {
+        onEvent("ticket_status_changed", ticket.userId, { ticketId, newStatusLabel: newLabel });
+      }
+    }
+  }, [onEvent, tickets]);
 
   /**
    * Agrega una observación interna a un ticket.
@@ -183,12 +202,17 @@ export function TicketProvider({ children }) {
         return {
           ...t,
           status: newStatus,
+          assignedAt: t.assignedAt ?? now,   // Solo la primera asignación; reasignaciones lo preservan
           assignedTo: { id: technicianId, name: technicianName },
           history: historyEntries,
         };
       }),
     );
-  }, []);
+    // Notificar al técnico asignado (fuera del map, con el ID ya conocido)
+    if (onEvent) {
+      onEvent("ticket_assigned", technicianId, { ticketId });
+    }
+  }, [onEvent]);
 
   /**
    * Edita campos de un ticket (solo mientras status === "pendiente").
@@ -256,7 +280,11 @@ export function TicketProvider({ children }) {
         };
       }),
     );
-  }, []);
+    // onEvent se llama DESPUÉS del updater. actorId es el dueño (quien da conformidad).
+    if (onEvent) {
+      onEvent("ticket_closed", actorId, { ticketId });
+    }
+  }, [onEvent]);
 
   return (
     // setTickets NO se expone — los componentes deben usar las funciones encapsuladas
