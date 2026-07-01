@@ -6,6 +6,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
+import ChangePasswordPage from "./pages/ChangePasswordPage.jsx";
 import UserPortal from "./pages/UserPortal.jsx";
 import DashboardHome from "./pages/DashboardHome.jsx";
 import CreateTicketPage from "./pages/CreateTicketPage.jsx";
@@ -21,7 +22,9 @@ import TecnicoLayout from "./pages/TecnicoLayout.jsx";
 import TecnicoTickets from "./pages/TecnicoTickets.jsx";
 import TecnicoProfile from "./pages/TecnicoProfile.jsx";
 
-import { UserProvider } from "./context/UserContext.jsx";
+import { RequirePasswordChange } from "./components/RequirePasswordChange.jsx";
+
+import { UserProvider, useUsers } from "./context/UserContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 import { SettingsProvider } from "./context/SettingsContext.jsx";
 import { NotificationProvider, useNotifications } from "./context/NotificationContext.jsx";
@@ -58,8 +61,19 @@ export default function App() {
  */
 function TicketProviderWithNotifications() {
   const { addNotification } = useNotifications();
+  const { users } = useUsers();
+
+  const handleTicketEvent = (type, recipientId, payload) => {
+    if (recipientId === "admin") {
+      const activeAdmins = users.filter((u) => u.role === "admin" && u.estado === "Activo");
+      activeAdmins.forEach((admin) => addNotification(type, admin.id, payload));
+    } else {
+      addNotification(type, recipientId, payload);
+    }
+  };
+
   return (
-    <TicketProvider onEvent={addNotification}>
+    <TicketProvider onEvent={handleTicketEvent}>
       <AppRoutes />
     </TicketProvider>
   );
@@ -67,12 +81,14 @@ function TicketProviderWithNotifications() {
 
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+    <RequirePasswordChange>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
 
-      <Route
+        <Route
         path="/dashboard"
         element={
           <ProtectedRoute role="usuario">
@@ -115,7 +131,8 @@ function AppRoutes() {
 
       <Route path="/" element={<RootRedirect />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+      </Routes>
+    </RequirePasswordChange>
   );
 }
 

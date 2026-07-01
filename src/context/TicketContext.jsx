@@ -72,8 +72,12 @@ export function TicketProvider({ children, onEvent }) {
       };
 
       setTickets((prev) => [...prev, newTicket]);
+
+      if (onEvent) {
+        onEvent("ticket_created", "admin", { ticketId: id });
+      }
     },
-    [tickets],
+    [tickets, onEvent],
   );
 
   /**
@@ -120,7 +124,7 @@ export function TicketProvider({ children, onEvent }) {
         onEvent("ticket_conformidad_required", ticket.userId, { ticketId });
       } else if (newStatusId === "cerrado") {
         onEvent("ticket_closed", ticket.userId, { ticketId });
-      } else if (newStatusId === "en-proceso" && ticket.assignedTo?.id) {
+      } else if (newStatusId === "en-proceso" && ticket.assignedTo?.id && actorId !== ticket.assignedTo.id) {
         onEvent("ticket_reopened", ticket.assignedTo.id, { ticketId });
       } else {
         onEvent("ticket_status_changed", ticket.userId, { ticketId, newStatusLabel: newLabel });

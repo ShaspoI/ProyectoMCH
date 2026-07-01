@@ -151,7 +151,7 @@ export function UserProvider({ children }) {
             email,
             telefono,
             // Solo actualiza la contraseña si se proporcionó una nueva
-            ...(password ? { password } : {}),
+            ...(password ? { password, tempPassword: false } : {}),
           };
         }),
       );
@@ -186,7 +186,7 @@ export function UserProvider({ children }) {
     const tempPassword = Math.random().toString(36).slice(-8);
     // Actualizamos el estado para que el login con la nueva clave funcione en la demo
     setUsers((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, password: tempPassword } : u)),
+      prev.map((u) => (u.id === id ? { ...u, password: tempPassword, tempPassword: true } : u)),
     );
     return tempPassword;
   }, []);
